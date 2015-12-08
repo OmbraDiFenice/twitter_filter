@@ -54,9 +54,6 @@ public class CloudGenerator {
 		dbLog.setCapturing(capturing);
 		
 		try {
-			DbWriter dbWriter = new DbWriter(conf, "INSERT INTO myselection VALUES (?,?,?)", new MessageConsole("(useless, just testing) selection table"));
-			dbWriter.start();
-			
 			// apply the filters specified in filtering.conf
 			// and create the time windows by grouping tweets in the same time interval.
 			// The time interval of a window is specified by the refreshTime option in assessment.conf
@@ -66,7 +63,6 @@ public class CloudGenerator {
 				.filter((Tweet tweet) -> !tweet.isDiscarded()) // remove flagged tweets from the stream
 				// group together tweets belonging to the same time window and output a Map having the time window 
 				// initial instant as key and the list of tweets as values 
-				.map((Tweet tweet) -> {dbWriter.enqueue(tweet); return tweet;} ) // store info in 'selection' table too, so a comparison with previous version can be performed
 				.collect(Collectors.groupingBy((Tweet tweet ) -> { // TODO ci sono modi più efficienti per suddividere i tweet
 					Instant i = capturing.getFirstWindowStart();
 					Instant last = i;
@@ -77,7 +73,6 @@ public class CloudGenerator {
 					}
 					return last;
 				}));
-			dbWriter.finish();
 			
 			filteringLog.write(timeWindows.size() + " time windows generated. Starting assessment...", Color.green);
 			
